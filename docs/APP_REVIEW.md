@@ -45,7 +45,7 @@ The existing IndexedDB database, stores, IDs, and lookup keys remain. No existin
 
 Existing working-tree modifications were retained as the starting point. A binary Git diff snapshot was saved to the local temporary directory before edits, and work moved to the local branch `enhance/logbook-experience`. No user health data was read from a browser profile; browser tests use isolated contexts and synthetic entries.
 
-Entries stay in the current browser until the user exports or backs them up. There is no automatic cross-device synchronization. JSON backup and restore is the portable path. The standalone repository is private. Personal reports and backups should still stay outside source control.
+Entries stay in the current browser until the user exports or backs them up. There is no automatic cross-device synchronization. JSON backup and restore is the portable path. The standalone repository is public with the owner?s authorization. Personal reports and backups should still stay outside source control.
 
 ## Validation and practical limits
 
@@ -53,7 +53,7 @@ Final local results: **21 unit tests passed, 8 desktop/phone browser tests passe
 
 Automated checks cover calendar-day/DST behavior, simultaneous symptoms, filtering, invalid imports without partial writes, newest-edit merging, legacy restore, CSV formula escaping, actual XLSX serialization/readback, and mocked Drive failure paths. Browser checks cover phone/desktop logging, editing/cancelling, reload persistence, drafts while navigating, filtering, Excel download, import, delete cancellation, and overflow. A production test checks offline reload, save, and Excel download.
 
-The phone tests run Chromium at an iPhone-sized viewport; they are not a physical iPhone or Safari test. A short Safari/Home Screen review with the user's device is still needed. Google Drive OAuth needs the user's account for a real consent/backup/restore check. Personal GitHub access is verified. The user chose a separate private repository, HecticMike/psa-logbook-app; the existing Our Health repository remains unchanged. GitHub Actions checks the separate app, while hosting remains unconfigured.
+The phone tests run Chromium at an iPhone-sized viewport; they are not a physical iPhone or Safari test. A short Safari/Home Screen review with the user's device is still needed. Google Drive OAuth needs the user's account for a real consent/backup/restore check. Personal GitHub access is verified. The user chose a separate repository, HecticMike/psa-logbook-app, and authorized public source visibility and Pages deployment; the existing Our Health repository remains unchanged. GitHub Actions checks and deploys the separate app.
 
 Excel export is a separate approximately 270 KB compressed library chunk. It is cached for offline access, increasing the initial PWA cache. Drafts are kept while navigating the app but are not durable across a reload. Old backups may restore deleted records because deletion is not synchronized.
 
