@@ -17,8 +17,8 @@ export default defineConfig({
         short_name: 'PsA Logbook',
         start_url: pagesBase,
         display: 'standalone',
-        background_color: '#f6f7f3',
-        theme_color: '#246e60',
+        background_color: '#f4f6fb',
+        theme_color: '#f4f6fb',
         icons: [
           {
             src: 'icon-192.png',

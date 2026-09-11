@@ -45,32 +45,22 @@ export function Overview({
     <div className="overview">
       <section className="welcome-card">
         <div>
-          <p className="eyebrow">YOUR HEALTH, IN VIEW</p>
-          <h2>
-            Make sense of
-            <br className="desktop-break" /> how you’ve been feeling.
-          </h2>
-          <p>Small observations today. A clearer conversation at your next appointment.</p>
+          <p className="eyebrow">
+            <span className="checkin-dot" /> YOUR DAILY CHECK-IN
+          </p>
+          <h2>How are you feeling?</h2>
+          <p>A moment to check in. A clearer picture over time.</p>
           <button className="primary" onClick={onLog}>
             <Icon name="plus" />
             Log symptoms
           </button>
         </div>
         <div className="welcome-art" aria-hidden="true">
-          <div className="art-orbit" />
-          <div className="art-sheet">
-            <Icon name="leaf" size={30} />
-            <span />
-            <span />
-            <svg viewBox="0 0 180 70">
-              <path d="M0 52L25 40 50 47 75 20 100 30 128 15 155 25 180 6" />
-            </svg>
-            <div className="art-check">
-              <Icon name="check" size={25} />
-            </div>
+          <div className="checkin-orbit orbit-outer" />
+          <div className="checkin-orbit orbit-inner" />
+          <div className="checkin-core">
+            <Icon name="activity" size={58} />
           </div>
-          <span className="art-dot one" />
-          <span className="art-dot two" />
         </div>
       </section>
       <div className="stats-grid">
@@ -105,7 +95,9 @@ export function Overview({
           <section className="stat-card" key={m.label}>
             <div className="stat-label">
               {m.label}
-              <Icon name={m.icon} size={17} />
+              <span className="stat-icon">
+                <Icon name={m.icon} size={18} />
+              </span>
             </div>
             <div className="stat-value">
               {m.value}

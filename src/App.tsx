@@ -96,11 +96,11 @@ export default function App() {
       <aside className="sidebar">
         <a className="brand" href="#main" onClick={() => navigate('overview')}>
           <span className="brand-mark">
-            <Icon name="leaf" size={25} />
+            <Icon name="activity" size={25} />
           </span>
           <span>
             PsA<span className="brand-light"> Logbook</span>
-            <small>A little clarity, every day.</small>
+            <small>Your health, in focus.</small>
           </span>
         </a>
         <p className="nav-caption">YOUR SPACE</p>
@@ -131,7 +131,7 @@ export default function App() {
       <main id="main" className="main-content">
         <header className="page-header">
           <div>
-            <p className="eyebrow">PSORIATIC ARTHRITIS · PERSONAL LOGBOOK</p>
+            <p className="eyebrow">YOUR PERSONAL HEALTH SPACE</p>
             <h1 ref={heading} tabIndex={-1}>
               {title}
             </h1>
