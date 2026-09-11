@@ -1,0 +1,40 @@
+name: Check PsA Logbook
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: psa-logbook-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Build app
+        env:
+          VITE_BASE: /psa-logbook-app/
+        run: npm run build
+      - name: Install browser
+        run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - run: npm run test:pwa
+      - name: Upload production build
+        uses: actions/upload-artifact@v4
+        with:
+          name: psa-logbook-build
+          path: dist
