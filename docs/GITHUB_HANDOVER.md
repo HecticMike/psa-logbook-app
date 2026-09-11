@@ -17,12 +17,16 @@ The source includes the local PsA work present at the start of the review. Exist
 
 Run `npm ci` and `npm run dev`, then open http://localhost:5175/psa-logbook-app/.
 
-Unit tests, desktop/phone browser tests, and the production offline test run in GitHub Actions for pull requests and main. The workflow uploads a production build artifact; it does not deploy a site.
+Unit tests, desktop/phone browser tests, and the production offline test run in GitHub Actions for pull requests and main. Pull requests upload a review build. A successful main build publishes to GitHub Pages once Pages is enabled.
 
 Physical iPhone/Safari and real Google Drive consent, backup, and restore checks still need manual verification. Use a PsA JSON backup to load representative personal records locally; keep that backup outside Git.
 
 ## Hosting
 
-Hosting has not been configured, and the repository is private. The build base is `/psa-logbook-app/`; set `VITE_BASE` to the intended path if another hosting arrangement is chosen.
+The prepared deployment URL is https://hecticmike.github.io/psa-logbook-app/. The existing https://hecticmike.github.io/psa-logbook/ address and any Home Screen icon installed from it still open the previous app.
 
-Before publishing, choose the hosting service and repository visibility, configure the Google OAuth authorized origin, and verify backup/restore with the deployed origin. No production deployment or change to the existing Our Health site is part of this pull request.
+The repository is currently private. GitHub rejected enabling Pages with HTTP 422: the current account plan does not support Pages for this private repository. Publishing through Pages requires explicit permission to make this repository public, or an account plan that supports private repositories. Another host can be configured if the source should remain private.
+
+The deployment workflow is prepared and gated on a successful main build. After the hosting decision: enable Pages with a workflow source, merge the reviewed PR, wait for deployment, and verify the new URL before using it on a phone. The original Our Health repository remains unchanged.
+
+On a phone, open the new URL in Safari and use Share → Add to Home Screen to create a shortcut for the redesigned app. Export a backup before changing shortcuts. GitHub Pages projects on the same hostname share a browser origin, so the existing PsA IndexedDB records may already appear; a separate installed app context can still require importing the backup. Do not clear browser storage to force an update.

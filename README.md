@@ -76,6 +76,8 @@ Real Google consent and account operations still require a manual check with you
 
 The repository is [HecticMike/psa-logbook-app](https://github.com/HecticMike/psa-logbook-app). Vite's default base is `/psa-logbook-app/`; override `VITE_BASE` only if the deployment path changes.
 
-The private standalone repository runs Node 24 unit tests, a production build, browser tests, and an offline PWA test on pull requests and main. The workflow uploads the production build as an artifact. Hosting is not configured and no site is automatically deployed. The existing Our Health repository is unchanged.
+The standalone repository runs Node 24 unit tests, a production build, browser tests, and an offline PWA test on pull requests and main. Pull requests upload a review artifact. Once GitHub Pages is enabled, successful main builds publish to https://hecticmike.github.io/psa-logbook-app/. The existing Our Health repository is unchanged.
+
+Pages activation is currently blocked by the account plan while this repository is private. The deployment workflow is ready; repository visibility will only change with the owner's permission. See [GitHub handover](docs/GITHUB_HANDOVER.md).
 
 No health records are included in repository code or test fixtures. Keep downloaded personal backups and reports outside the repository.
