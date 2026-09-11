@@ -13,6 +13,7 @@ const paths = {
   calendar: 'M4 5h16v16H4z M4 10h16 M8 3v4 M16 3v4',
   edit: 'M4 16l12-12 4 4L8 20H4z M13 7l4 4',
   search: 'M10 3a7 7 0 1 0 0 14 7 7 0 0 0 0-14 M15 15l6 6',
+  sliders: 'M4 7h16 M4 17h16 M8 4v6 M16 14v6',
   cloud: 'M6 18a5 5 0 0 1-1-10 7 7 0 0 1 13-1 6 6 0 0 1 0 11z',
   leaf: 'M5 19C1 9 8 3 21 3c0 13-6 19-16 16z M5 19L16 8'
 };

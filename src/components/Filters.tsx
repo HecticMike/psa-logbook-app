@@ -38,7 +38,10 @@ export function Filters({
           {count} {count === 1 ? 'entry' : 'entries'}
         </span>
         <details className="filter-details">
-          <summary>Filters{extra && <span className="filter-dot" />}</summary>
+          <summary>
+            <Icon name="sliders" size={16} />
+            Filters{extra && <span className="filter-dot" />}
+          </summary>
           <div className="filter-fields">
             <label>
               Body area

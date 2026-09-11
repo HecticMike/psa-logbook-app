@@ -132,7 +132,7 @@ export function LocationPicker({ region, joint, custom, side, onChange }: Props)
                       <path
                         d="M60 44L105 75 M114 23L150 58 M168 32L184 67 M222 58L211 85 M261 104L232 110"
                         fill="none"
-                        stroke="#799869"
+                        className="digit-connectors"
                       />
                     </>
                   )}
