@@ -73,6 +73,12 @@ export function Journal({
               <dd>{e.triggerCustom || labelForKey(TRIGGER_OPTIONS, e.triggerKey)}</dd>
               <dt>Action taken</dt>
               <dd>{e.actionCustom || labelForKey(ACTION_OPTIONS, e.actionKey)}</dd>
+              <dt>Fatigue</dt>
+              <dd>{e.fatigue == null ? 'Not recorded' : `${e.fatigue} / 10`}</dd>
+              <dt>Morning stiffness</dt>
+              <dd>
+                {e.morningStiffnessMinutes == null ? 'Not recorded' : `${e.morningStiffnessMinutes} min`}
+              </dd>
               <dt>Last updated</dt>
               <dd>{formatDateTime(e.updatedAt)}</dd>
             </dl>

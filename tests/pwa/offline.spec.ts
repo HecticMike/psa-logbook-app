@@ -15,6 +15,10 @@ test('installed production app reloads, logs, and exports Excel while offline', 
     .filter({ visible: true })
     .first()
     .click();
+  const bodyArt = page.locator('.body-guide img');
+  await expect.poll(() => bodyArt.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true);
+  await page.getByRole('button', { name: 'Back view' }).click();
+  await expect.poll(() => bodyArt.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true);
   await page.getByRole('button', { name: 'Neck', exact: true }).first().click();
   await page.getByRole('button', { name: 'Stiffness', exact: true }).click();
   await page.getByRole('button', { name: 'Pain 0 out of 10', exact: true }).click();

@@ -9,13 +9,23 @@ import {
   labelForKey,
   type Option
 } from '../lib/lookups';
-import { jointLabel, regionLabel, sideLabel, symptomKeys, toLocalInput } from '../lib/insights';
+import {
+  formatDate,
+  jointLabel,
+  regionLabel,
+  sideLabel,
+  symptomKeys,
+  symptomLabel,
+  toLocalInput
+} from '../lib/insights';
 import { LocationPicker } from './LocationPicker';
 import { Icon } from './Icon';
 type Form = {
   start: string;
   end: string;
   pain: number | null;
+  fatigue: number | null;
+  morningStiffnessMinutes: number | null;
   region: string;
   joint: string;
   custom: string;
@@ -28,11 +38,14 @@ type Form = {
   actionCustom: string;
   notes: string;
 };
+const draftKey = 'psa-logbook-entry-draft-v1';
 function initial(entry?: EventRecord): Form {
   return {
     start: toLocalInput(entry?.startAt),
     end: entry?.endAt != null ? toLocalInput(entry.endAt) : '',
     pain: entry?.pain ?? null,
+    fatigue: entry?.fatigue ?? null,
+    morningStiffnessMinutes: entry?.morningStiffnessMinutes ?? null,
     region: entry?.regionKey ?? '',
     joint: entry?.jointKey ?? '',
     custom: entry?.jointCustom ?? '',
@@ -46,6 +59,24 @@ function initial(entry?: EventRecord): Form {
     notes: entry?.notes ?? ''
   };
 }
+function readDraft(): Form {
+  try {
+    const value = JSON.parse(localStorage.getItem(draftKey) || 'null');
+    if (
+      value &&
+      typeof value.start === 'string' &&
+      Array.isArray(value.symptoms) &&
+      typeof value.region === 'string' &&
+      typeof value.notes === 'string' &&
+      (value.pain === null || Number.isInteger(value.pain))
+    ) {
+      return { ...initial(), ...value };
+    }
+  } catch {
+    /* Storage may be unavailable. Logging still works. */
+  }
+  return initial();
+}
 export function LogForm({
   active,
   entry,
@@ -56,16 +87,54 @@ export function LogForm({
   active: boolean;
   entry?: EventRecord;
   recent: EventRecord[];
-  onSaved: () => void;
+  onSaved: (continueLogging: boolean) => void;
   onCancel: () => void;
 }) {
-  const [form, setForm] = useState<Form>(() => initial(entry));
+  const [form, setForm] = useState<Form>(() => (entry ? initial(entry) : readDraft()));
+  const [restoredDraft] = useState(() => {
+    try {
+      return !entry && !!localStorage.getItem(draftKey);
+    } catch {
+      return false;
+    }
+  });
   const [busy, setBusy] = useState(false);
+  const [sessionCount, setSessionCount] = useState(0);
   const saving = useRef(false);
   const [error, setError] = useState('');
-  const [more, setMore] = useState(Boolean(entry?.endAt || entry?.triggerKey || entry?.actionKey));
+  const [more, setMore] = useState(
+    Boolean(
+      entry?.endAt ||
+      entry?.triggerKey ||
+      entry?.actionKey ||
+      entry?.fatigue != null ||
+      entry?.morningStiffnessMinutes != null
+    )
+  );
   const [locationVersion, setLocationVersion] = useState(0);
   const initialStart = useRef(form.start);
+  const hasDraft = Boolean(
+    restoredDraft ||
+    form.start !== initialStart.current ||
+    form.region ||
+    form.symptoms.length ||
+    form.notes ||
+    form.pain !== null ||
+    form.fatigue !== null ||
+    form.morningStiffnessMinutes !== null ||
+    form.end ||
+    form.trigger ||
+    form.action
+  );
+  useEffect(() => {
+    if (entry) return;
+    try {
+      if (hasDraft) localStorage.setItem(draftKey, JSON.stringify(form));
+      else localStorage.removeItem(draftKey);
+    } catch {
+      /* A storage error must not prevent saving the entry in IndexedDB. */
+    }
+  }, [form, entry, hasDraft]);
   useEffect(() => {
     if (active && !entry)
       setForm((current) => {
@@ -74,7 +143,9 @@ export function LogForm({
           current.region ||
           current.symptoms.length ||
           current.notes ||
-          current.pain !== null
+          current.pain !== null ||
+          current.fatigue !== null ||
+          current.morningStiffnessMinutes !== null
         )
           return current;
         initialStart.current = toLocalInput();
@@ -83,19 +154,21 @@ export function LogForm({
   }, [active, entry]);
   const set = <K extends keyof Form>(key: K, value: Form[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
-  const frequent = [
-    ...new Map(
-      recent
-        .filter((e) => e.regionKey)
-        .map((e) => [`${e.regionKey}|${e.jointKey}|${e.side}`, e] as const)
-        .reverse()
-    ).values()
-  ]
-    .reverse()
+  const frequent = recent
+    .filter((e) => e.regionKey)
+    .filter(
+      (e, index, all) =>
+        all.findIndex(
+          (other) =>
+            `${other.regionKey}|${other.jointKey}|${other.side}` === `${e.regionKey}|${e.jointKey}|${e.side}`
+        ) === index
+    )
     .slice(0, 3);
   async function submit(e: FormEvent) {
     e.preventDefault();
     if (saving.current) return;
+    const continueLogging =
+      !entry && ((e.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null)?.value === 'another';
     setError('');
     if (!form.region && !entry?.region) {
       setError('Choose a body area first. You can select “Another area” if you are unsure.');
@@ -118,6 +191,8 @@ export function LogForm({
       startAt,
       endAt: form.end ? new Date(form.end).getTime() : null,
       pain: form.pain,
+      fatigue: form.fatigue,
+      morningStiffnessMinutes: form.morningStiffnessMinutes,
       region: form.region ? labelForKey(REGION_OPTIONS, form.region) : (entry?.region ?? ''),
       regionKey: form.region || undefined,
       jointKey: form.joint || undefined,
@@ -137,8 +212,27 @@ export function LogForm({
     try {
       if (entry) await updateEvent(entry.id, values);
       else await createEvent(values);
-      setForm(initial());
-      onSaved();
+      if (!entry) {
+        try {
+          localStorage.removeItem(draftKey);
+        } catch {
+          /* Ignore unavailable storage. */
+        }
+      }
+      if (continueLogging) {
+        initialStart.current = form.start;
+        setForm({
+          ...initial(),
+          start: form.start,
+          symptoms: [...form.symptoms],
+          symptomCustom: form.symptomCustom
+        });
+        setLocationVersion((version) => version + 1);
+        setSessionCount((count) => count + 1);
+        setMore(false);
+        window.scrollTo({ top: 0, behavior: 'instant' });
+      } else setForm(initial());
+      onSaved(continueLogging);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -177,6 +271,18 @@ export function LogForm({
   return (
     <form onSubmit={submit} className="log-layout">
       <div className="log-main">
+        {sessionCount > 0 && !entry && (
+          <p className="session-progress" role="status">
+            <Icon name="check" size={18} />
+            {sessionCount} {sessionCount === 1 ? 'area' : 'areas'} saved. Choose the next location and its own
+            pain score.
+          </p>
+        )}
+        {restoredDraft && !entry && (
+          <p className="draft-reminder" role="status">
+            Your unfinished entry is here. Check the start time before saving.
+          </p>
+        )}
         <section className="panel">
           <div className="section-heading">
             <span className="step">1</span>
@@ -187,24 +293,35 @@ export function LogForm({
           </div>
           {!entry && frequent.length > 0 && (
             <div className="recent-locations">
-              <span className="eyebrow">Recent locations</span>
-              <div className="chips">
+              <span className="eyebrow">QUICK START · RECENT ENTRIES</span>
+              <p className="helper">Reuse a location and symptoms, then choose today’s pain score.</p>
+              <div className="recent-template-list">
                 {frequent.map((e) => (
                   <button
                     type="button"
                     key={e.id}
+                    aria-label={`Use details from ${formatDate(e.startAt)}: ${sideLabel(e.side)}, ${regionLabel(e)}, ${jointLabel(e)}, ${symptomLabel(e)}`}
                     onClick={() => {
                       setForm((p) => ({
                         ...p,
                         region: e.regionKey ?? '',
                         joint: e.jointKey ?? '',
                         custom: e.jointCustom ?? '',
-                        side: e.side ?? ''
+                        side: e.side ?? '',
+                        symptoms: symptomKeys(e),
+                        symptomCustom: e.symptomCustom ?? '',
+                        pain: null
                       }));
                       setLocationVersion((v) => v + 1);
                     }}
                   >
-                    {sideLabel(e.side).replace('Side not recorded', '')} {regionLabel(e)} · {jointLabel(e)}
+                    <strong>
+                      {sideLabel(e.side).replace('Side not recorded', 'Side unsure')} · {regionLabel(e)}
+                    </strong>
+                    <span>
+                      {jointLabel(e)} · {symptomLabel(e)}
+                    </span>
+                    <small>{formatDate(e.startAt)} · Use details</small>
                   </button>
                 ))}
               </div>
@@ -321,10 +438,39 @@ export function LogForm({
             onClick={() => setMore(!more)}
           >
             <Icon name={more ? 'close' : 'plus'} size={17} />
-            End time, possible trigger & action taken
+            Fatigue, morning stiffness & other details
           </button>
           {more && (
             <div className="more-fields">
+              <p className="helper">Optional observations. Leave blank when you haven’t measured them.</p>
+              <div className="measure-fields">
+                <label className="field">
+                  Fatigue (0–10)
+                  <input
+                    type="number"
+                    min="0"
+                    max="10"
+                    step="1"
+                    inputMode="numeric"
+                    value={form.fatigue ?? ''}
+                    onChange={(e) => set('fatigue', e.target.value === '' ? null : Number(e.target.value))}
+                  />
+                </label>
+                <label className="field">
+                  Morning stiffness (minutes)
+                  <input
+                    type="number"
+                    min="0"
+                    max="1440"
+                    step="1"
+                    inputMode="numeric"
+                    value={form.morningStiffnessMinutes ?? ''}
+                    onChange={(e) =>
+                      set('morningStiffnessMinutes', e.target.value === '' ? null : Number(e.target.value))
+                    }
+                  />
+                </label>
+              </div>
               <label className="field">
                 Ended at <span className="optional">leave blank if unknown or ongoing</span>
                 <input
@@ -350,11 +496,42 @@ export function LogForm({
               <Icon name="check" />
               {busy ? 'Saving…' : entry ? 'Save changes' : 'Save entry'}
             </button>
-            <button type="button" onClick={onCancel} disabled={busy}>
-              {entry ? 'Cancel edit' : 'Clear & close'}
+            {!entry && (
+              <button
+                type="submit"
+                name="saveAction"
+                value="another"
+                className="save-another"
+                aria-label="Save and add another area"
+                disabled={busy}
+              >
+                <Icon name="plus" size={18} />
+                Save + next area
+              </button>
+            )}
+            <button
+              type="button"
+              className={!entry ? 'form-close' : undefined}
+              onClick={() => {
+                if (!entry) {
+                  try {
+                    localStorage.removeItem(draftKey);
+                  } catch {
+                    /* Ignore unavailable storage. */
+                  }
+                }
+                onCancel();
+              }}
+              disabled={busy}
+            >
+              {entry ? 'Cancel edit' : sessionCount ? 'Done for now' : 'Clear & close'}
             </button>
           </div>
-          <p className="helper">Saved on this device. Ready even when you’re offline.</p>
+          <p className="helper">
+            {!entry && hasDraft
+              ? 'Draft kept on this device until you save or clear it.'
+              : 'Saved on this device. Ready even when you’re offline.'}
+          </p>
         </div>
       </div>
       <aside className="log-aside">
@@ -368,7 +545,10 @@ export function LogForm({
         </p>
         <div className="aside-rule" />
         <strong>One location, one entry</strong>
-        <p>For another affected area, save this entry and add a new one. You can reuse a recent location.</p>
+        <p>
+          Use “Save + next area” to record each affected location with its own pain score. The time and
+          symptoms carry forward; review them for the next area.
+        </p>
       </aside>
     </form>
   );

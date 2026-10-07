@@ -14,11 +14,13 @@ import { downloadFile, downloadWorkbook, recordsAsCsv } from '../lib/report';
 import { Icon } from './Icon';
 export function DataPanel({
   records,
+  allRecords,
   total,
   filters,
   reload
 }: {
   records: EventRecord[];
+  allRecords: EventRecord[];
   total: number;
   filters: RecordFilters;
   reload: () => Promise<void>;
@@ -60,7 +62,8 @@ export function DataPanel({
         <p className="eyebrow">READY FOR YOUR APPOINTMENT</p>
         <h2>Your records, ready to share.</h2>
         <p>
-          Download an Excel workbook with a summary, detailed entries, daily pain, body areas, and symptoms.
+          Download an Excel workbook with a summary, period comparison, detailed entries, daily pain, body
+          areas, symptoms, pain-score counts, and optional fatigue and stiffness measures.
         </p>
         <div className="export-scope">
           <strong>{records.length} entries selected</strong>
@@ -69,10 +72,10 @@ export function DataPanel({
         <div className="button-row">
           <button
             className="primary"
-            disabled={!!busy || !records.length}
+            disabled={!!busy || !allRecords.length}
             onClick={() =>
               run('excel', async () => {
-                await downloadWorkbook(records, filters);
+                await downloadWorkbook(records, filters, allRecords);
                 return 'Excel report downloaded.';
               })
             }

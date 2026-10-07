@@ -23,6 +23,18 @@ export function validateValues(values: EventFormValues) {
     throw new Error('End time must be on or after the start time.');
   if (!Number.isInteger(values.pain) || values.pain < 0 || values.pain > 10)
     throw new Error('Pain must be a whole number from 0 to 10.');
+  if (
+    values.fatigue != null &&
+    (!Number.isInteger(values.fatigue) || values.fatigue < 0 || values.fatigue > 10)
+  )
+    throw new Error('Fatigue must be a whole number from 0 to 10.');
+  if (
+    values.morningStiffnessMinutes != null &&
+    (!Number.isInteger(values.morningStiffnessMinutes) ||
+      values.morningStiffnessMinutes < 0 ||
+      values.morningStiffnessMinutes > 1440)
+  )
+    throw new Error('Morning stiffness must be between 0 and 1440 minutes.');
   if (typeof values.region !== 'string' || typeof values.notes !== 'string')
     throw new Error('Location and notes must be text.');
   if (values.side && !['left', 'right', 'both'].includes(values.side)) throw new Error('Invalid side.');

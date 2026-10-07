@@ -3,6 +3,8 @@ import { REGION_OPTIONS, SYMPTOM_OPTIONS, jointsForRegion, labelForKey } from '.
 
 export type RecordFilters = {
   days: number;
+  from: string;
+  to: string;
   regionKey: string;
   jointKey: string;
   symptomKey: string;
@@ -11,6 +13,8 @@ export type RecordFilters = {
 };
 export const DEFAULT_FILTERS: RecordFilters = {
   days: 30,
+  from: '',
+  to: '',
   regionKey: '',
   jointKey: '',
   symptomKey: '',
@@ -61,12 +65,15 @@ export function filterRecords(
   filters: RecordFilters,
   now = Date.now()
 ): EventRecord[] {
-  const start = startOfPeriod(filters.days, now);
+  const start = filters.days > 0 ? startOfPeriod(filters.days, now) : null;
   const q = filters.query.trim().toLocaleLowerCase();
   return records
     .filter(
       (e) =>
-        (start === null || e.startAt >= start) &&
+        (filters.days === -1
+          ? (!filters.from || localDateKey(e.startAt) >= filters.from) &&
+            (!filters.to || localDateKey(e.startAt) <= filters.to)
+          : start === null || e.startAt >= start) &&
         e.startAt <= now &&
         (!filters.regionKey || e.regionKey === filters.regionKey) &&
         (!filters.jointKey || e.jointKey === filters.jointKey) &&
@@ -90,7 +97,11 @@ export function filterRecords(
 }
 export function filterDescription(f: RecordFilters): string {
   return [
-    f.days ? `Last ${f.days} days` : 'All time',
+    f.days === -1
+      ? `${f.from || 'Any date'} to ${f.to || 'today'}`
+      : f.days
+        ? `Last ${f.days} days`
+        : 'All time',
     f.regionKey ? labelForKey(REGION_OPTIONS, f.regionKey) : 'All areas',
     f.jointKey ? labelForKey(jointsForRegion(f.regionKey), f.jointKey) : '',
     f.symptomKey ? labelForKey(SYMPTOM_OPTIONS, f.symptomKey) : '',
@@ -102,6 +113,10 @@ export function filterDescription(f: RecordFilters): string {
 }
 export type DailySummary = { date: string; count: number; average: number; peak: number };
 export function summarize(records: EventRecord[]) {
+  const fatigueValues = records.flatMap((e) => (typeof e.fatigue === 'number' ? [e.fatigue] : []));
+  const stiffnessValues = records.flatMap((e) =>
+    typeof e.morningStiffnessMinutes === 'number' ? [e.morningStiffnessMinutes] : []
+  );
   const groups = new Map<string, EventRecord[]>();
   const areas = new Map<string, { count: number; total: number }>();
   const symptoms = new Map<string, number>();
@@ -129,6 +144,18 @@ export function summarize(records: EventRecord[]) {
     loggedDays: daily.length,
     average: records.length ? records.reduce((sum, e) => sum + e.pain, 0) / records.length : null,
     peak: records.length ? Math.max(...records.map((e) => e.pain)) : null,
+    fatigueCount: fatigueValues.length,
+    fatigueAverage: fatigueValues.length
+      ? fatigueValues.reduce((sum, value) => sum + value, 0) / fatigueValues.length
+      : null,
+    stiffnessCount: stiffnessValues.length,
+    stiffnessAverage: stiffnessValues.length
+      ? stiffnessValues.reduce((sum, value) => sum + value, 0) / stiffnessValues.length
+      : null,
+    painScores: Array.from({ length: 11 }, (_, score) => ({
+      score,
+      count: records.filter((e) => e.pain === score).length
+    })),
     daily,
     areas: [...areas]
       .map(([label, v]) => ({ label, count: v.count, average: v.total / v.count }))

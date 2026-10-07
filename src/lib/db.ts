@@ -5,6 +5,8 @@ export type EventRecord = {
   startAt: number;
   endAt?: number | null;
   pain: number;
+  fatigue?: number | null;
+  morningStiffnessMinutes?: number | null;
   region: string;
   regionKey?: string;
   jointKey?: string;

@@ -4,12 +4,13 @@ A phone-first psoriatic arthritis diary with a visual location picker, an overvi
 
 ## What you can do
 
-- **Overview:** entry counts, days with entries, average and highest pain, a daily pain chart, affected areas, symptoms, and recent entries.
-- **Log:** tap a body area, open a hand or foot guide, choose a side and location, select multiple symptoms, and explicitly score pain from 0 to 10. Recent locations make repeat logging quicker.
-- **History:** filter by period, body area, joint, symptom, minimum pain, or text; edit entries or confirm deletion.
+- **Overview:** a quick summary, recent entries, and a direct route to Stats.
+- **Stats:** pain history, score spread, affected areas, symptoms, optional fatigue and morning-stiffness averages, and a side-by-side comparison with the preceding period of equal length.
+- **Log:** tap a marked area on the front or back body guide, open a mirrored hand or foot guide, choose a side and location, select multiple symptoms, and explicitly score pain from 0 to 10. Toe callouts point to their toes without overlapping touch targets. Optional fatigue (0–10) and morning stiffness (minutes) can be left blank. Save + next area keeps the time and symptoms while clearing the location and pain score.
+- **History:** filter by rolling period or exact inclusive dates, body area, joint, symptom, minimum pain, or text; edit entries or confirm deletion.
 - **Export & backup:** download a real Excel workbook or CSV of the current filtered view; download a complete JSON backup; merge a backup from a file or Google Drive.
 
-The charts describe **recorded entries**. An unlogged day is missing data, not a symptom-free day. Pain averages are per entry, not per calendar day. Multiple symptoms can belong to one entry. Unknown end times are not assigned a duration.
+The charts describe **recorded entries**. An unlogged day is missing data, not a symptom-free day. Pain, fatigue and stiffness averages use only entries where those values were recorded, not calendar days. Multiple symptoms can belong to one entry. Unknown end times are not assigned a duration. Different logging frequency can affect comparisons.
 
 See [the review and redesign decisions](docs/APP_REVIEW.md) and [GitHub handover](docs/GITHUB_HANDOVER.md).
 
@@ -40,7 +41,7 @@ npm run test:pwa
 
 The database name remains `psa-logbook-db`, with the existing stores and schema version. Older IDs, timestamps, lookup keys, notes, and single-symptom records are retained.
 
-New entries optionally add `symptomKeys` and `jointCustom`. `symptomKey` retains the first selected symptom for compatibility. Reports and the app prefer the multi-symptom list when present. Lookup keys are stable; labels can be made friendlier without rekeying records.
+New entries optionally add `symptomKeys`, `jointCustom`, `fatigue`, and `morningStiffnessMinutes`. `symptomKey` retains the first selected symptom for compatibility. Reports and the app prefer the multi-symptom list when present. Lookup keys are stable; labels can be made friendlier without rekeying records. Existing records have no implied values for the optional measures.
 
 Imports validate the entire file before any writes and merge in a transaction. The newest `updatedAt` wins for the same ID; older backups can use `createdAt` when `updatedAt` is absent. Unsupported schema versions and invalid records are rejected. Existing unrelated records stay.
 
@@ -48,7 +49,7 @@ Deleting entries is local deletion, not synchronized deletion. An older backup c
 
 ## Reports
 
-Excel has five sheets: Summary, Entries, Daily summary, Body areas, and Symptoms. It includes the filter scope, exporting time zone, local and UTC timestamps, original keys, numeric pain and duration values, and notes. CSV has readable labels, UTF-8 BOM, quoting, line breaks, and formula-prefix escaping.
+Excel has seven sheets: Summary, Comparison, Entries, Daily summary, Body areas, Symptoms, and Pain scores. It includes the selected filter scope, an equal-length preceding period, exporting time zone, local and UTC timestamps, original keys, numeric pain, fatigue and duration values, and notes. CSV has readable labels, UTF-8 BOM, quoting, line breaks, and formula-prefix escaping.
 
 ExcelJS is loaded separately from the main application and cached by the service worker for offline export. Its compressed bundle adds roughly 270 KB to the install cache. Its compatible CommonJS UUID dependency is overridden to a patched version.
 
@@ -56,7 +57,7 @@ ExcelJS is loaded separately from the main application and cached by the service
 
 On iPhone, open the deployed site in Safari and choose Share → Add to Home Screen. The layout has bottom navigation, safe-area padding, large logging controls, keyboard focus styles, text alternatives to diagrams, and a table alternative to the chart.
 
-After the first successful load and service-worker installation, the built app works offline. The development server does not enable a service worker. Drafts survive switching views within the open app; an unsaved draft does not survive reloading or closing it.
+After the first successful load and service-worker installation, the built app works offline. The development server does not enable a service worker. New-entry drafts survive switching views and reloading on the same device and browser. Saving or choosing Clear & close removes the draft. Drafts are separate from JSON and Google Drive backups.
 
 Browser storage belongs to the device, browser, and site origin. The local development preview does not automatically contain records from the deployed site. Download a JSON backup from the existing app and import it into the preview if you want to review your own data locally.
 

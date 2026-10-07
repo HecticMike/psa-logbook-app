@@ -1,5 +1,5 @@
 import { REGION_OPTIONS, SYMPTOM_OPTIONS, jointsForRegion } from '../lib/lookups';
-import { DEFAULT_FILTERS, type RecordFilters } from '../lib/insights';
+import { DEFAULT_FILTERS, localDateKey, startOfPeriod, type RecordFilters } from '../lib/insights';
 import { Icon } from './Icon';
 export function Filters({
   value,
@@ -19,13 +19,26 @@ export function Filters({
         <label className="period-control">
           <Icon name="calendar" size={18} />
           <span className="sr-only">Time period</span>
-          <select value={value.days} onChange={(e) => onChange({ ...value, days: Number(e.target.value) })}>
+          <select
+            value={value.days}
+            onChange={(e) => {
+              const days = Number(e.target.value);
+              onChange({
+                ...value,
+                days,
+                ...(days === -1 && !value.from && !value.to
+                  ? { from: localDateKey(startOfPeriod(30)!), to: localDateKey(Date.now()) }
+                  : {})
+              });
+            }}
+          >
             {[
               [7, 'Last 7 days'],
               [30, 'Last 30 days'],
               [90, 'Last 90 days'],
               [183, 'Last 6 months'],
               [365, 'Last year'],
+              [-1, 'Custom dates'],
               [0, 'All time']
             ].map(([key, label]) => (
               <option key={key} value={key}>
@@ -109,14 +122,47 @@ export function Filters({
                 placeholder="e.g. walking, index finger…"
               />
             </label>
-            <button onClick={() => onChange({ ...DEFAULT_FILTERS, days: value.days })}>Clear filters</button>
+            <button
+              onClick={() =>
+                onChange({ ...DEFAULT_FILTERS, days: value.days, from: value.from, to: value.to })
+              }
+            >
+              Clear filters
+            </button>
           </div>
         </details>
       </div>
+      {value.days === -1 && (
+        <div className="date-range-fields" role="group" aria-label="Custom date range">
+          <label>
+            From
+            <input
+              type="date"
+              value={value.from}
+              max={value.to || localDateKey(Date.now())}
+              onChange={(e) => onChange({ ...value, from: e.target.value })}
+            />
+          </label>
+          <label>
+            To
+            <input
+              type="date"
+              value={value.to}
+              min={value.from || undefined}
+              max={localDateKey(Date.now())}
+              onChange={(e) => onChange({ ...value, to: e.target.value })}
+            />
+          </label>
+          <span>Inclusive of both dates</span>
+        </div>
+      )}
       {extra && (
         <div className="active-filter-note">
           <span>Additional filters are applied to this view and its reports.</span>
-          <button className="text-button" onClick={() => onChange({ ...DEFAULT_FILTERS, days: value.days })}>
+          <button
+            className="text-button"
+            onClick={() => onChange({ ...DEFAULT_FILTERS, days: value.days, from: value.from, to: value.to })}
+          >
             Clear
           </button>
         </div>

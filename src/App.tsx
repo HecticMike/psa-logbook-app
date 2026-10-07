@@ -9,10 +9,11 @@ import { Journal } from './components/Journal';
 import { DataPanel } from './components/DataPanel';
 import { Icon, type IconName } from './components/Icon';
 import './index.css';
-type View = 'overview' | 'log' | 'journal' | 'data';
+type View = 'overview' | 'log' | 'stats' | 'journal' | 'data';
 const navigation: { key: View; label: string; icon: IconName }[] = [
   { key: 'overview', label: 'Overview', icon: 'overview' },
   { key: 'log', label: 'Log symptoms', icon: 'plus' },
+  { key: 'stats', label: 'Stats', icon: 'activity' },
   { key: 'journal', label: 'History', icon: 'journal' },
   { key: 'data', label: 'Export & backup', icon: 'export' }
 ];
@@ -85,6 +86,7 @@ export default function App() {
   const title = {
     overview: 'Your overview',
     log: editing ? 'Edit your entry' : 'Log how you feel',
+    stats: 'Your stats',
     journal: 'Your symptom history',
     data: 'Export & backup'
   }[view];
@@ -140,9 +142,11 @@ export default function App() {
                 ? 'A clearer picture, one observation at a time.'
                 : view === 'log'
                   ? 'Take a moment to check in with yourself.'
-                  : view === 'journal'
-                    ? 'Revisit the details and prepare for your next conversation.'
-                    : 'Bring your observations to your care team.'}
+                  : view === 'stats'
+                    ? 'Explore what you recorded and compare periods.'
+                    : view === 'journal'
+                      ? 'Revisit the details and prepare for your next conversation.'
+                      : 'Bring your observations to your care team.'}
             </p>
           </div>
           {view !== 'log' && (
@@ -185,9 +189,24 @@ export default function App() {
             {view === 'overview' && (
               <Overview
                 records={filtered}
+                allRecords={records}
                 total={records.length}
                 filters={filters}
                 onLog={() => navigate('log')}
+                onStats={() => navigate('stats')}
+                onJournal={() => navigate('journal')}
+                onEdit={edit}
+              />
+            )}
+            {view === 'stats' && (
+              <Overview
+                mode="stats"
+                records={filtered}
+                allRecords={records}
+                total={records.length}
+                filters={filters}
+                onLog={() => navigate('log')}
+                onStats={() => navigate('stats')}
                 onJournal={() => navigate('journal')}
                 onEdit={edit}
               />
@@ -199,8 +218,13 @@ export default function App() {
                 entry={editing}
                 recent={records}
                 onCancel={closeForm}
-                onSaved={() => {
+                onSaved={(continueLogging) => {
                   const wasEditing = !!editing;
+                  if (continueLogging) {
+                    setNow(Date.now());
+                    setNotice('');
+                    return;
+                  }
                   setEditing(undefined);
                   setFormVersion((v) => v + 1);
                   setNow(Date.now());
@@ -225,7 +249,13 @@ export default function App() {
               />
             )}
             {view === 'data' && (
-              <DataPanel records={filtered} total={records.length} filters={filters} reload={reload} />
+              <DataPanel
+                records={filtered}
+                allRecords={records}
+                total={records.length}
+                filters={filters}
+                reload={reload}
+              />
             )}
           </>
         )}
