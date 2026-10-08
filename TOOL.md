@@ -4,7 +4,7 @@ purpose: Phone-first psoriatic arthritis symptom diary with Excel reports for ap
 status: In use
 superseded_by:
 launch: https://hecticmike.github.io/psa-logbook-app/
-updated: 2026-10-07
+updated: 2026-10-08
 ---
 
 ## What it does
@@ -29,6 +29,7 @@ A symptom diary for psoriatic arthritis, designed to be used on a phone. You tap
 - [x] Replace the body, hand, foot, finger and toe guides with generated artwork; add a rear view for Back and spaced toe callouts; mirror close-ups for the selected side
 - [x] Add a dedicated Stats view and equal-length period comparison in the app and Excel
 - [x] Add optional fatigue scores and morning-stiffness minutes to logging, history, stats and exports
+- [ ] Add in-app update and transfer guidance: show the build version, distinguish Home Screen storage from Safari, and prompt for a full backup before replacing an installed shortcut
 - [ ] Review the optional measures with the care team and decide whether any others, such as medication dose, would help
 - [ ] If automatic sync is wanted, design conflict handling and deletion tracking first
 
@@ -43,6 +44,7 @@ A symptom diary for psoriatic arthritis, designed to be used on a phone. You tap
 - Saving the next area keeps the start time and symptom choices but clears location, pain, notes and optional measures for the new entry.
 - Anatomy artwork is in `public/anatomy/`; location targets are calibrated in `src/components/LocationPicker.tsx` and PWA-cached for offline logging.
 - The hand illustration is a left palm (thumb at image left) and mirrors for Right; the foot illustration is a right foot from above (big toe at image left) and mirrors for Left.
+- The published `/psa-logbook-app/` page can be current while an installed Home Screen app still shows old cached code or points at `/psa-logbook/`. On iPhone, Safari and Home Screen apps have separate local data. Back up from the app containing entries, and restore inside the destination Home Screen app; importing into Safari does not populate a separate Home Screen app.
 - An unlogged day is missing data, not a symptom-free day; pain averages are per entry, not per day.
 - The old address https://hecticmike.github.io/psa-logbook/ still opens the previous app. Export a backup before switching Home Screen shortcuts, and do not clear browser storage to force an update.
 - Google Drive needs the OAuth client ID in `src/config.ts` (scope `drive.file`, file `PsA-Logbook/psa-logbook-data.json`).
