@@ -6,6 +6,7 @@ const pagesBase = process.env.VITE_BASE ?? '/psa-logbook-app/';
 
 export default defineConfig({
   base: pagesBase,
+  define: { __APP_BUILD__: JSON.stringify(process.env.GITHUB_SHA?.slice(0, 7) ?? 'local') },
   server: { port: 5175, strictPort: true },
   preview: { port: 4175, strictPort: true },
   plugins: [

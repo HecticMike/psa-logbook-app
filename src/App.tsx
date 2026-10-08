@@ -260,7 +260,7 @@ export default function App() {
           </>
         )}
         <footer className="app-footer">
-          <span>PsA Logbook</span>
+          <span>PsA Logbook · Build {__APP_BUILD__}</span>
           <span>Made for your everyday, and your next appointment.</span>
         </footer>
       </main>
